@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
-	"time"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -16,15 +16,15 @@ const (
 )
 
 type Logger struct {
-	FileName string
-	File *os.File
-	Level uint
-	Flag string
+	FileName      string
+	File          *os.File
+	Level         uint
+	Flag          string
 	PrintToStdout bool
 }
 
 func newLogger(flag, path string, printToStd bool) *Logger {
-	logger := Logger{FileName:path, PrintToStdout:printToStd, Flag:flag}
+	logger := Logger{FileName: path, PrintToStdout: printToStd, Flag: flag}
 	var err error
 
 	if path != "" {
@@ -34,35 +34,34 @@ func newLogger(flag, path string, printToStd bool) *Logger {
 	return &logger
 }
 
-func (l Logger) Debug (args ...interface{}) {
+func (l Logger) Debug(args ...interface{}) {
 	if l.Level <= LDebug {
 		l.Log("DEBUG", args...)
 	}
 }
 
-func (l Logger) Info (args ...interface{}) {
+func (l Logger) Info(args ...interface{}) {
 	if l.Level <= LInfo {
 		l.Log("Info", args...)
 	}
 }
-func (l Logger) Warn (args ...interface{}) {
+func (l Logger) Warn(args ...interface{}) {
 	if l.Level <= LWarn {
 		l.Log("Warn", args...)
 	}
 }
-func (l Logger) Error (args ...interface{}) {
+func (l Logger) Error(args ...interface{}) {
 	if l.Level <= LError {
 		l.Log("Error", args...)
 	}
 }
-func (l Logger) Fatal (args ...interface{}) {
+func (l Logger) Fatal(args ...interface{}) {
 	if l.Level <= LFatal {
 		l.Log("Fatal", args...)
 	}
 }
 
-
-func (l Logger) Log (level string, args ...interface{}) {
+func (l Logger) Log(level string, args ...interface{}) {
 	tfmt := "2006-01-02 15:04:05"
 	prefix := time.Now().Format(tfmt)
 	msg := l.Flag + " | " + level + " | " + prefix + " | " + fmtLogMsg(args...)

@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync/atomic"
 	"time"
-	"log"
 )
 
 const (
@@ -39,7 +39,7 @@ func main() {
 	flag.Parse()
 
 	// set logger
-	logger := newLogger("dragonfly","./dragonfly.log", true)
+	logger := newLogger("dragonfly", "./dragonfly.log", true)
 	logger.Info("Server is starting...")
 
 	// http
@@ -52,8 +52,8 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:         listenAddr,
-		Handler:      tracing(nextRequestID)(logging(logger)(router)),
+		Addr:    listenAddr,
+		Handler: tracing(nextRequestID)(logging(logger)(router)),
 		// ErrorLog:     logger,      // use log =>  logger := log.New(os.Stdout, "dragonfly: ", log.LstdFlags)
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
