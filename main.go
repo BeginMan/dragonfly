@@ -92,7 +92,7 @@ func main() {
 func index() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			errorHandler(w, r, http.StatusNotFound)
 			return
 		}
 
@@ -110,6 +110,11 @@ func index() http.Handler {
 
 func healthz() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/healthz" {
+			errorHandler(w, r, http.StatusNotFound)
+			return
+		}
+
 		if atomic.LoadInt32(&healthy) == 1 {
 			w.WriteHeader(http.StatusNoContent)
 			return
