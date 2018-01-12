@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,22 +15,10 @@ const (
 	requestIDKey int = 0
 )
 
-type Response interface{}
-
-type Res struct {
-	Data string `json:"data"`
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-}
-
 var (
 	listenAddr string
 	healthy    int32
 )
-
-func NewRes(data string) Response {
-	return Res{Data: data, Code: 0, Msg: ""}
-}
 
 func main() {
 	flag.StringVar(&listenAddr, "listen-addr", ":5000", "server listen address")
@@ -53,7 +39,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    listenAddr,
-		Handler: tracing(nextRequestID)(logging(logger)(router)),
+		Handler: Tracing(nextRequestID)(Logging(logger)(router)),
 		// ErrorLog:     logger,      // use log =>  logger := log.New(os.Stdout, "dragonfly: ", log.LstdFlags)
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
@@ -87,68 +73,4 @@ func main() {
 
 	<-done
 	logger.Info("Server stopped")
-}
-
-func index() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			errorHandler(w, r, http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusOK)
-		res := NewRes("hello world!")
-		jsonRes, err := json.Marshal(res.(Res))
-		if err != nil {
-			log.Fatal(err)
-		}
-		w.Write(jsonRes)
-	})
-}
-
-func healthz() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/healthz" {
-			errorHandler(w, r, http.StatusNotFound)
-			return
-		}
-
-		if atomic.LoadInt32(&healthy) == 1 {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		w.WriteHeader(http.StatusServiceUnavailable)
-	})
-}
-
-func logging(logger *Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				requestID, ok := r.Context().Value(requestIDKey).(string)
-				if !ok {
-					requestID = "unknown"
-				}
-				logger.Info(requestID, r.Method, r.URL.Path, r.RemoteAddr, r.UserAgent())
-			}()
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func tracing(nextRequestID func() string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requestID := r.Header.Get("X-Request-Id")
-			if requestID != "" {
-				requestID = nextRequestID()
-			}
-
-			ctx := context.WithValue(r.Context(), requestIDKey, requestID)
-			w.Header().Set("X-Request-Id", requestID)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
 }
