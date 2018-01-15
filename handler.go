@@ -10,7 +10,7 @@ import (
 func index() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			errorHandler(w, http.StatusNotFound, "404")
+			errorHandler(w, http.StatusNotFound)
 			return
 		}
 
@@ -29,7 +29,7 @@ func index() http.Handler {
 func healthz() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/healthz" {
-			errorHandler(w, http.StatusNotFound, "404")
+			errorHandler(w, http.StatusNotFound)
 			return
 		}
 

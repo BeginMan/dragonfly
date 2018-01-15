@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type StatusError struct {
@@ -37,9 +38,13 @@ func NewRes(data string) Response {
 	return Res{Data: data, Code: 0, Msg: ""}
 }
 
-func errorHandler(w http.ResponseWriter, status int, msg string) {
+func errorHandler(w http.ResponseWriter, status int, msgOpt ...string) {
+	msg := http.StatusText(status)
 	w.WriteHeader(status)
 
+	if len(msgOpt) > 0 {
+		msg = strings.Join(msgOpt, ",")
+	}
 	res := Res{"", status, msg}
 	jsonRes, _ := json.Marshal(res)
 	w.Write(jsonRes)
